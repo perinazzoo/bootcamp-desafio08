@@ -36,17 +36,73 @@ const CartProvider: React.FC = ({ children }) => {
     loadProducts();
   }, []);
 
-  const addToCart = useCallback(async product => {
-    // TODO ADD A NEW ITEM TO THE CART
-  }, []);
+  const addToCart = useCallback(
+    async (product: Omit<Product, 'quantity'>) => {
+      const productExists = products.find(p => p.id === product.id);
 
-  const increment = useCallback(async id => {
-    // TODO INCREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+      if (productExists) {
+        setProducts(
+          products.map(p =>
+            p.id !== product.id
+              ? p
+              : {
+                ...p,
+                quantity: p.quantity + 1,
+              },
+          ),
+        );
+        return;
+      }
 
-  const decrement = useCallback(async id => {
-    // TODO DECREMENTS A PRODUCT QUANTITY IN THE CART
-  }, []);
+      setProducts([
+        {
+          ...product,
+          quantity: 1,
+        },
+        ...products,
+      ]);
+    },
+    [products],
+  );
+
+  const increment = useCallback(
+    async id => {
+      setProducts(
+        products.map(p =>
+          p.id !== id
+            ? p
+            : {
+              ...p,
+              quantity: p.quantity + 1,
+            },
+        ),
+      );
+    },
+    [products],
+  );
+
+  const decrement = useCallback(
+    async id => {
+      const product = products.find(p => p.id === id);
+
+      if (product!.quantity <= 1) {
+        setProducts(products.filter(p => p.id !== id));
+        return;
+      }
+
+      setProducts(
+        products.map(p =>
+          p.id !== id
+            ? p
+            : {
+              ...p,
+              quantity: p.quantity - 1,
+            },
+        ),
+      );
+    },
+    [products],
+  );
 
   const value = React.useMemo(
     () => ({ addToCart, increment, decrement, products }),
