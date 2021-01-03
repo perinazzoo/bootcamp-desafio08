@@ -25,16 +25,26 @@ interface CartContext {
 
 const CartContext = createContext<CartContext | null>(null);
 
+const STORAGE_KEY = '@GoMarketplace';
+
 const CartProvider: React.FC = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     async function loadProducts(): Promise<void> {
-      // TODO LOAD ITEMS FROM ASYNC STORAGE
+      const items = await AsyncStorage.getItem(STORAGE_KEY);
+
+      if (items) {
+        setProducts(JSON.parse(items));
+      }
     }
 
     loadProducts();
   }, []);
+
+  const setAsyncStorage = useCallback(async (): Promise<void> => {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  }, [products]);
 
   const addToCart = useCallback(
     async (product: Omit<Product, 'quantity'>) => {
@@ -51,6 +61,7 @@ const CartProvider: React.FC = ({ children }) => {
               },
           ),
         );
+        await setAsyncStorage();
         return;
       }
 
@@ -61,8 +72,9 @@ const CartProvider: React.FC = ({ children }) => {
         },
         ...products,
       ]);
+      await setAsyncStorage();
     },
-    [products],
+    [products, setAsyncStorage],
   );
 
   const increment = useCallback(
@@ -77,8 +89,9 @@ const CartProvider: React.FC = ({ children }) => {
             },
         ),
       );
+      await setAsyncStorage();
     },
-    [products],
+    [products, setAsyncStorage],
   );
 
   const decrement = useCallback(
@@ -87,6 +100,7 @@ const CartProvider: React.FC = ({ children }) => {
 
       if (product!.quantity <= 1) {
         setProducts(products.filter(p => p.id !== id));
+        await setAsyncStorage();
         return;
       }
 
@@ -100,8 +114,9 @@ const CartProvider: React.FC = ({ children }) => {
             },
         ),
       );
+      await setAsyncStorage();
     },
-    [products],
+    [products, setAsyncStorage],
   );
 
   const value = React.useMemo(
